@@ -1,25 +1,31 @@
 section .text
 global _start       ; for linker
 
-_start:             ; label
-jmp _readCrap
-jmp _exit
+_start:                     ; label
+jmp _helloMessage
 
-_writeCrap:
+_helloMessage:
 mov eax, 4          ; syscall #4 - write
 mov ebx, 1          ; std out
-mov ecx, buffer        ; buffer out
-mov edx, INSIZE       ; buffer size
+mov ecx, helloMessage     ; buffer out
+mov edx, helloMessageSize     ; buffer size
 int 0x80            ; invoke dispatcher
-jmp _exit
+jmp _getInput
 
-_readCrap:
+_getInput:
 mov eax, 3          ; syscall 3 - read
 mov ebx, 0          ; std in
 mov ecx, buffer     ; buffer to read into
-mov edx, INSIZE     ; number of bytes to read
+mov edx, BUFFER_SIZE     ; number of bytes to read
 int 0x80            ; invoke dispatcher
-jmp _writeCrap
+jmp _writeInput
+
+_writeInput:
+mov eax, 4
+mov ebx, 1
+mov ecx, buffer
+mov edx, BUFFER_SIZE
+int 0x80
 
 _exit:
 mov eax, 1
@@ -28,9 +34,11 @@ int 0x80
 
 ;;; Variables
 section .data
-msg: db "Hello World", 10
-SIZE: equ $ - msg
+helloMessage: db "Enter braces and the magic computer monkeys will let you know there's an error if they don't match.", 10, ">> "
+helloMessageSize: equ $ - helloMessage
+errorMessage: db "ERORR", 10
+errorMessageSize: equ $ - errorMessage
+BUFFER_SIZE: equ 1024    ; declare constant
 
 section .bss
-INSIZE: equ 1024    ; declare constant
-buffer: resb INSIZE ; declare buffer of SIZE bytes
+buffer: resb BUFFER_SIZE   ; declare buffer of SIZE bytes
