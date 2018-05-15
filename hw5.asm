@@ -15,15 +15,31 @@ jmp _getInput
 _getInput:
 mov eax, 3          ; syscall 3 - read
 mov ebx, 0          ; std in
-mov ecx, buffer     ; buffer to read into
+mov ecx, inputBuffer     ; buffer to read into
 mov edx, BUFFER_SIZE     ; number of bytes to read
 int 0x80            ; invoke dispatcher
-jmp _writeInput
+jmp _getNextCharacterSetup
+
+_getNextCharacterSetup:
+mov eax, 0              ; i = 0
+mov ebx, inputBuffer    ; ebx = input buffer address
+_getNextCharacter:
+xor ecx, ecx              ; zero'r out
+mov ch, [ebx + eax]     ; ch = [inputBuffer + i] ; 1 byte
+inc eax                 ; i++
+
+cmp ch, 0x78            ; ch == x
+je _exit                ; exit
+
+cmp ch, 0xa             ; ch == new line feed ?
+je _exit                ; true; exit
+
+jmp _getNextCharacter   ; false; continue loop
 
 _writeInput:
 mov eax, 4
 mov ebx, 1
-mov ecx, buffer
+mov ecx, inputBuffer
 mov edx, BUFFER_SIZE
 int 0x80
 
@@ -41,4 +57,4 @@ errorMessageSize: equ $ - errorMessage
 BUFFER_SIZE: equ 1024    ; declare constant
 
 section .bss
-buffer: resb BUFFER_SIZE   ; declare buffer of SIZE bytes
+inputBuffer: resb BUFFER_SIZE   ; declare inputBuffer of SIZE bytes

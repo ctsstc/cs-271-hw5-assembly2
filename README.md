@@ -27,3 +27,6 @@ Build, run kdbg, select the source and the executable if you didn't start it by 
 ```shell
 kdbg hw5
 ```
+
+## Helpful Links
+- http://www.cs.virginia.edu/~evans/cs216/guides/x86.html
