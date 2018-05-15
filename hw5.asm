@@ -1,40 +1,37 @@
 section .text
-global _start       ; for linker
+global _start               ; for linker
 
 _start:                     ; label
 jmp _helloMessage
 
 _helloMessage:
-mov eax, 4          ; syscall #4 - write
-mov ebx, 1          ; std out
-mov ecx, helloMessage     ; buffer out
-mov edx, helloMessageSize     ; buffer size
-int 0x80            ; invoke dispatcher
+mov eax, 4                  ; syscall #4 - write
+mov ebx, 1                  ; std out
+mov ecx, helloMessage       ; buffer out
+mov edx, helloMessageSize   ; buffer size
+int 0x80                    ; invoke dispatcher
 jmp _getInput
 
 _getInput:
-mov eax, 3          ; syscall 3 - read
-mov ebx, 0          ; std in
-mov ecx, inputBuffer     ; buffer to read into
-mov edx, BUFFER_SIZE     ; number of bytes to read
-int 0x80            ; invoke dispatcher
+mov eax, 3                  ; syscall 3 - read
+mov ebx, 0                  ; std in
+mov ecx, inputBuffer        ; buffer to read into
+mov edx, BUFFER_SIZE        ; number of bytes to read
+int 0x80                    ; invoke dispatcher
 jmp _getNextCharacterSetup
 
 _getNextCharacterSetup:
-mov eax, 0              ; i = 0
-mov ebx, inputBuffer    ; ebx = input buffer address
+mov eax, 0                  ; i = 0
+mov ebx, inputBuffer        ; ebx = input buffer address
 _getNextCharacter:
-xor ecx, ecx              ; zero'r out
-mov ch, [ebx + eax]     ; ch = [inputBuffer + i] ; 1 byte
-inc eax                 ; i++
+xor ecx, ecx                ; zero'r out - easier to debug
+mov ch, [ebx + eax]         ; ch = [inputBuffer + i] ; 1 byte
+inc eax                     ; i++
 
-cmp ch, 0x78            ; ch == x
-je _exit                ; exit
+cmp ch, 0xa                 ; ch == new line feed / EOL
+je _exit                    ; true; exit
 
-cmp ch, 0xa             ; ch == new line feed ?
-je _exit                ; true; exit
-
-jmp _getNextCharacter   ; false; continue loop
+jmp _getNextCharacter       ; false; continue loop
 
 _writeInput:
 mov eax, 4
