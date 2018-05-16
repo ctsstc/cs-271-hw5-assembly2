@@ -20,8 +20,14 @@ mov edx, BUFFER_SIZE        ; number of bytes to read
 int 0x80                    ; invoke dispatcher
 jmp _getNextCharacterSetup
 
+;;;;; Loop Registers
+;;; eax         = i
+;;; ebx         = items popped
+;;; ecx, cx, ch = current character
+;;; edx, dx, dh = popped character count
 _getNextCharacterSetup:
 mov eax, 0                  ; i = 0
+mov ebx, 0                  ; popped characters = 0
 _getNextCharacter:
 xor ecx, ecx                ; zero'r out - easier to debug ch
 xor edx, edx                ; zero'r out - easier to debug dx
@@ -40,11 +46,13 @@ cmp ch, "{"
 je __pushCharacter
 
 ; Right Braces - Pop & Validate Stack
-cmp eax, 1
-je _failed                  ; Can't start with a right brace
+cmp eax, 1                  ; i == 1
+je _failed                  ; true; Can't start with a right brace
 
-pop dx                      ; cl = pop stack - all 
+pop dx                      ; dx = pop stack - should be a left brace
+inc ebx                     ; popped character count ++ 
 
+; Determine popped character
 cmp ch, ")"
 je __validateStack1
 cmp ch, "]"
@@ -59,10 +67,13 @@ je __checkEmptyStack
 ; Some Weird Input,,, Rage Quit
 jmp _failed
 
+;;; <helpers prefix="__">
+; Left brace
 __pushCharacter:
-push cx
+push cx                     ; push current character onto the stack
 jmp _getNextCharacter
 
+; Right Brace
 __validateStack1:
 cmp dh, "("
 je _getNextCharacter
@@ -76,17 +87,24 @@ cmp dh, "{"
 je _getNextCharacter
 jmp _failed
 
+; EOL - End of Line Character
 __checkEmptyStack:
-pop ebx
-pop ebx
-pop ebx
+inc eax                     ; i++ - so we can divide by 2 counting base 0
+sar eax, 1                  ; i / 2
+cmp eax, ebx                ; i == pushed count
+je _success                 ; true
+jmp _failed                 ; false
 
-_writeInput:
-mov eax, 4
-mov ebx, 1
-mov ecx, inputBuffer
-mov edx, BUFFER_SIZE
-int 0x80
+;;; </helpers>
+
+
+_success:
+mov eax, 4                  ; syscall #4 - write
+mov ebx, 1                  ; std out
+mov ecx, inputBuffer        ; buffer out
+mov edx, BUFFER_SIZE        ; buffer size
+int 0x80                    ; invoke dispatcher
+jmp _exit
 
 _failed:
 mov eax, 4                  ; syscall #4 - write
@@ -97,9 +115,9 @@ int 0x80                    ; invoke dispatcher
 jmp _exit
 
 _exit:
-mov eax, 1
-mov ebx, 0
-int 0x80
+mov eax, 1                  ; syscall #1 - Exit?
+mov ebx, 0                  ; exit code? 0
+int 0x80                    ; invoke dispatcher
 
 ;;; Variables
 section .data
