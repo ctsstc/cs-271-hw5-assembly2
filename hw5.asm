@@ -35,65 +35,66 @@ mov ch, [inputBuffer + eax]         ; c = [inputBuffer + i] ; 1 byte
 inc eax                     ; i++
 jmp __validate
 
+;;; <helpers prefix="__">
 __validate:
 
 ; Left Braces - Push To Stack
-cmp ch, "("
-je __pushCharacter
-cmp ch, "["
-je __pushCharacter
-cmp ch, "{"
-je __pushCharacter
+cmp ch, "("                 ; current character == (
+je __pushCharacter          ;   true --> push current character (
+cmp ch, "["                 ; current character == [
+je __pushCharacter          ;   true --> push current character [
+cmp ch, "{"                 ; current character == {
+je __pushCharacter          ;   true --> push current character {
 
 ; Right Braces - Pop & Validate Stack
 cmp eax, 1                  ; i == 1
-je _failed                  ; true; Can't start with a right brace
+je _failed                  ;   true; Can't start with a right brace
 
 pop dx                      ; dx = pop stack - should be a left brace
 inc ebx                     ; popped character count ++ 
 
 ; Determine popped character
-cmp ch, ")"
-je __validateStack1
-cmp ch, "]"
-je __validateStack2
-cmp ch, "}"
-je __validateStack3
+cmp ch, ")"                 ; current character == )
+je __validateStack1         ;   true --> validate stack for )
+cmp ch, "]"                 ; current character == ]
+je __validateStack2         ;   true --> validate stack for ]
+cmp ch, "}"                 ; current character == }
+je __validateStack3         ;   true --> validate stack for }
 
-; EOL - End of Line - Check for Empty Stack
-cmp ch, 0xa                 ; ch == new line feed / EOL
-je __checkEmptyStack
+; EOL - End of Line / Input - Check for Empty Stack
+cmp ch, 0xa                 ; current character == new line feed / EOL
+je __checkEmptyStack        ;   true --> Check for empty stack
 
 ; Some Weird Input,,, Rage Quit
-jmp _failed
+jmp _failed                 ; else / default --> failure
 
-;;; <helpers prefix="__">
+
 ; Left brace
 __pushCharacter:
 push cx                     ; push current character onto the stack
-jmp _getNextCharacter
+jmp _getNextCharacter       ; restart loop
 
 ; Right Brace
 __validateStack1:
-cmp dh, "("
-je _getNextCharacter
-jmp _failed
-__validateStack2:
-cmp dh, "["
-je _getNextCharacter
-jmp _failed
+cmp dh, "("                 ; popped character == (
+je _getNextCharacter        ;   true --> restart loop
+jmp _failed                 ;   false --> failure message
+__validateStack2:           
+cmp dh, "["                 ; popped character == [
+je _getNextCharacter        ;   true --> retart loop
+jmp _failed                 ;   false --> failure message
 __validateStack3:
-cmp dh, "{"
-je _getNextCharacter
-jmp _failed
+cmp dh, "{"                 ; popped character == {
+je _getNextCharacter        ;   true --> restart loop
+jmp _failed                 ;   false --> fialure message
 
 ; EOL - End of Line Character
 __checkEmptyStack:
 inc eax                     ; i++ - so we can divide by 2 counting base 0
 sar eax, 1                  ; i / 2
 cmp eax, ebx                ; i == pushed count
-je _success                 ; true
-jmp _failed                 ; false
+je _success                 ; true --> WE WON!
+jmp _failed                 ; false --> failure
 
 ;;; </helpers>
 
