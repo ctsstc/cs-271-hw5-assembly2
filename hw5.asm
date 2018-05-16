@@ -91,7 +91,7 @@ jmp _failed                 ;   false --> fialure message
 ; EOL - End of Line Character
 __checkEmptyStack:
 inc eax                     ; i++ - so we can divide by 2 counting base 0
-sar eax, 1                  ; i / 2
+sal ebx, 1                  ; pushed count *= 2 ;OLD: sar eax, 1; i / 2
 cmp eax, ebx                ; i == pushed count
 je _success                 ; true --> WE WON!
 jmp _failed                 ; false --> failure
